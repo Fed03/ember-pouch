@@ -44,10 +44,7 @@
     "ember-addon"
   ],
   "dependencies": {
-    "ember-cli-babel": "^5.1.6",
-    "pouchdb-authentication": "^0.5.3",
-    "pouchdb-browser": "^5.4.5",
-    "relational-pouch": "^1.4.4"
+    "ember-cli-babel": "^5.1.6"
   },
   "ember-addon": {
     "configPath": "tests/dummy/config"
