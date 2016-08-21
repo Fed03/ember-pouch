@@ -80,7 +80,7 @@ export default DS.Adapter.extend({
     @param {Array} snapshots
     @return {Promise} promise
   */
-  findMany(store, type, ids snapshots) {
+  findMany(store, type, ids, snapshots) {
 
   },
 });
