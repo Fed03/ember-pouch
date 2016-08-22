@@ -1,5 +1,6 @@
 import Resolver from '../../resolver';
 import config from '../../config/environment';
+import './create-raw';
 
 const resolver = Resolver.create();
 
