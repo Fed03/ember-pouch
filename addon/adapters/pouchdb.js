@@ -1,6 +1,11 @@
 import DS from 'ember-data';
+import PouchDB from 'pouchdb';
 
 export default DS.Adapter.extend({
+
+  init() {
+    this.db = new PouchDB(this.options.localDb);
+  },
 
   /*
     @method findRecord

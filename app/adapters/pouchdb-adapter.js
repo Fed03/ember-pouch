@@ -1,6 +1,6 @@
 import { Adapter } from 'ember-pouch';
-import { emberPouch } from '../config/environment';
+import config from '../config/environment';
 
 export default Adapter.extend({
-  options: emberPouch || {}
+  options: config.emberPouch || {}
 });
