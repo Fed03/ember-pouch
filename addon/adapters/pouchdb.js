@@ -1,5 +1,8 @@
 import DS from 'ember-data';
 import PouchDB from 'pouchdb';
+import Ember from 'ember';
+
+const { String: { pluralize } } = Ember;
 
 export default DS.Adapter.extend({
 
@@ -16,7 +19,13 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findRecord(store, type, id, snapshot) {
-
+    this._setSchema(type);
+    return this.get('db').rel.find(type.modelName, id).then(docs => {
+      const plural = pluralize(type.modelName);
+      if (docs[plural].length > 0) {
+        return docs[plural][0];
+      }
+    });
   },
 
   /*
@@ -77,7 +86,7 @@ export default DS.Adapter.extend({
   },
   /**
     TODO: Find multiple records at once if coalesceFindRequests is true.
-    
+
     @method findMany
     @param {DS.Store} store
     @param {DS.Model} type   the DS.Model class of the records
@@ -88,4 +97,17 @@ export default DS.Adapter.extend({
   findMany(store, type, ids, snapshots) {
 
   },
+  /**
+    @method _setSchema
+    @private
+    @param {DS.Model} type   the DS.Model class of the records
+  */
+  _setSchema(type) {
+    const schema = {
+      singular: type.modelName,
+      plural: pluralize(type.modelName)
+    };
+
+    this.get('db').setSchema([schema]);
+  }
 });

@@ -9,10 +9,10 @@ moduleForPouch('Acceptance | pouchdb-adapter', {
 
 test('it can find one doc', function(assert) {
   return createRaw([
-    { _id: 'tacoSoup_2_A', data: { flavor: 'al pastor' } },
-    { _id: 'burritoShake_2_X', data: { consistency: 'smooth' } }
+    { _id: 'taco-soup_2_A', data: { flavor: 'al pastor' } },
+    { _id: 'burrito-shake_2_X', data: { consistency: 'smooth' } }
   ]).then(() => {
-    return this.store.find('taco-soup', 'A');
+    return this.store.findRecord('taco-soup', 'A');
   }).then(found => {
     assert.equal(found.get('id'), 'A', 'should have found the requested item');
     assert.deepEqual(found.get('flavor'), 'al pastor', 'should have extracted the attributes also');
