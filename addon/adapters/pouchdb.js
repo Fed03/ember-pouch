@@ -70,7 +70,13 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   findAll(store, type, sinceToken, snapshotRecordArray) {
-
+    this._setSchema(type);
+    return this.get('db').rel.find(type.modelName).then(docs => {
+      const plural = pluralize(type.modelName);
+      if (docs[plural].length > 0) {
+        return docs[plural];
+      }
+    });
   },
 
   /*
