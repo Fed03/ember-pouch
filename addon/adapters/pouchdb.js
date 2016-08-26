@@ -36,7 +36,18 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   createRecord(store, type, snapshot) {
+    this._setSchema(type);
+    
+    const data = {};
+    const serializer = store.serializerFor(type.modelName);
+    serializer.serializeIntoHash(data, type, snapshot, { includeId: true });
 
+    return this.get('db').rel.save(type.modelName, data).then(docs => {
+      const plural = pluralize(type.modelName);
+      if (docs[plural].length > 0) {
+        return docs[plural][0];
+      }
+    });
   },
 
   /*
