@@ -41,7 +41,7 @@ test('it can create a new record', function(assert) {
       id: 'A',
       flavor: 'foo'
     });
-    
+
     return doc.save().then(() => {
       return findRaw('taco-soup_2_A');
     }).then(found => {
@@ -50,6 +50,24 @@ test('it can create a new record', function(assert) {
       var recordInStore = this.store.peekRecord('tacoSoup', 'A');
       assert.equal(found._rev, recordInStore.get('rev'),
         'should have associated the ember-data record with the rev for the new record');
+    });
+  });
+});
+
+test('it deletes an existing record', function(assert) {
+  assert.expect(1);
+  return Ember.run(() => {
+    const doc = this.store.createRecord('tacoSoup', {
+      id: 'A',
+      flavor: 'foo'
+    });
+
+    return doc.save().then(newDoc => {
+      return newDoc.destroyRecord();
+    }).then(() => {
+      return findRaw('taco-soup_2_A');
+    }).then(null, notFoundError => {
+      assert.equal(notFoundError.status, 404, 'document should no longer exist');
     });
   });
 });

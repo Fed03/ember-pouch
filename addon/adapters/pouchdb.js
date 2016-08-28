@@ -37,7 +37,7 @@ export default DS.Adapter.extend({
   */
   createRecord(store, type, snapshot) {
     this._setSchema(type);
-    
+
     const data = {};
     const serializer = store.serializerFor(type.modelName);
     serializer.serializeIntoHash(data, type, snapshot, { includeId: true });
@@ -69,7 +69,12 @@ export default DS.Adapter.extend({
     @return {Promise} promise
   */
   deleteRecord(store, type, snapshot) {
+    this._setSchema(type);
 
+    return this.get('db').rel.del(type.modelName, {
+      id: snapshot.id,
+      rev: snapshot.attributes().rev
+    }).then(() => null);
   },
 
   /*
