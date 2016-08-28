@@ -10,15 +10,14 @@ export default DS.Adapter.extend({
     this.db = new PouchDB(this.options.localDb);
   },
 
-  /*
+  /**
     @method findRecord
     @param {DS.Store} store
     @param {DS.Model} type
     @param {String} id
-    @param {DS.Snapshot} snapshot
     @return {Promise} promise
   */
-  findRecord(store, type, id, snapshot) {
+  findRecord(store, type, id) {
     this._setSchema(type);
     return this.get('db').rel.find(type.modelName, id).then(docs => {
       const plural = pluralize(type.modelName);
@@ -28,7 +27,7 @@ export default DS.Adapter.extend({
     });
   },
 
-  /*
+  /**
     @method createRecord
     @param {DS.Store} store
     @param {DS.Model} type   the DS.Model class of the record
@@ -50,18 +49,18 @@ export default DS.Adapter.extend({
     });
   },
 
-  /*
+  /**
     @method updateRecord
     @param {DS.Store} store
     @param {DS.Model} type   the DS.Model class of the record
     @param {DS.Snapshot} snapshot
     @return {Promise} promise
   */
-  updateRecord(store, type, snapshot) {
+  // updateRecord(store, type, snapshot) {
+  //
+  // },
 
-  },
-
-  /*
+  /**
     @method deleteRecord
     @param {DS.Store} store
     @param {DS.Model} type   the DS.Model class of the record
@@ -77,15 +76,15 @@ export default DS.Adapter.extend({
     }).then(() => null);
   },
 
-  /*
+  /**
     @method findAll
     @param {DS.Store} store
     @param {DS.Model} type
     @param {String} sinceToken
-    @param {DS.SnapshotRecordArray} snapshotRecordArray
     @return {Promise} promise
   */
-  findAll(store, type, sinceToken, snapshotRecordArray) {
+  // TODO: sinceToken
+  findAll(store, type/*, sinceToken*/) {
     this._setSchema(type);
     return this.get('db').rel.find(type.modelName).then(docs => {
       const plural = pluralize(type.modelName);
@@ -95,7 +94,7 @@ export default DS.Adapter.extend({
     });
   },
 
-  /*
+  /**
     @method query
     @param {DS.Store} store
     @param {DS.Model} type
@@ -103,9 +102,9 @@ export default DS.Adapter.extend({
     @param {DS.AdapterPopulatedRecordArray} recordArray
     @return {Promise} promise
   */
-  query(store, type, query, recordArray) {
-
-  },
+  // query(store, type, query, recordArray) {
+  //
+  // },
   /**
     TODO: Find multiple records at once if coalesceFindRequests is true.
 
@@ -116,9 +115,9 @@ export default DS.Adapter.extend({
     @param {Array} snapshots
     @return {Promise} promise
   */
-  findMany(store, type, ids, snapshots) {
-
-  },
+  // findMany(store, type, ids, snapshots) {
+  //
+  // },
   /**
     @method _setSchema
     @private
