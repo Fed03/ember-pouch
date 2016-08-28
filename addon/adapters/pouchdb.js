@@ -4,6 +4,13 @@ import Ember from 'ember';
 
 const { String: { pluralize } } = Ember;
 
+const extractData = function(type, docs) {
+  const plural = pluralize(type.modelName);
+  if (docs[plural].length > 0) {
+    return docs[plural];
+  }
+};
+
 export default DS.Adapter.extend({
 
   init() {
@@ -20,10 +27,7 @@ export default DS.Adapter.extend({
   findRecord(store, type, id) {
     this._setSchema(type);
     return this.get('db').rel.find(type.modelName, id).then(docs => {
-      const plural = pluralize(type.modelName);
-      if (docs[plural].length > 0) {
-        return docs[plural][0];
-      }
+      return extractData(type, docs)[0];
     });
   },
 
@@ -37,15 +41,9 @@ export default DS.Adapter.extend({
   createRecord(store, type, snapshot) {
     this._setSchema(type);
 
-    const data = {};
-    const serializer = store.serializerFor(type.modelName);
-    serializer.serializeIntoHash(data, type, snapshot, { includeId: true });
-
+    const data = this._serializeToData(store, type, snapshot);
     return this.get('db').rel.save(type.modelName, data).then(docs => {
-      const plural = pluralize(type.modelName);
-      if (docs[plural].length > 0) {
-        return docs[plural][0];
-      }
+      return extractData(type, docs)[0];
     });
   },
 
@@ -56,9 +54,14 @@ export default DS.Adapter.extend({
     @param {DS.Snapshot} snapshot
     @return {Promise} promise
   */
-  // updateRecord(store, type, snapshot) {
-  //
-  // },
+  updateRecord(store, type, snapshot) {
+    this._setSchema(type);
+
+    const data = this._serializeToData(store, type, snapshot);
+    return this.get('db').rel.save(type.modelName, data).then(docs => {
+      return extractData(type, docs)[0];
+    });
+  },
 
   /**
     @method deleteRecord
@@ -87,10 +90,7 @@ export default DS.Adapter.extend({
   findAll(store, type/*, sinceToken*/) {
     this._setSchema(type);
     return this.get('db').rel.find(type.modelName).then(docs => {
-      const plural = pluralize(type.modelName);
-      if (docs[plural].length > 0) {
-        return docs[plural];
-      }
+      return extractData(type, docs);
     });
   },
 
@@ -130,5 +130,22 @@ export default DS.Adapter.extend({
     };
 
     this.get('db').setSchema([schema]);
+  },
+
+  /**
+    @method _serializeToData
+    @private
+    @param {DS.Store} store
+    @param {DS.Model} type   the DS.Model class of the record
+    @param {DS.Snapshot} snapshot
+    @return {Object}
+  */
+  _serializeToData(store, type, snapshot) {
+    const data = {};
+    const serializer = store.serializerFor(type.modelName);
+
+    serializer.serializeIntoHash(data, type, snapshot, { includeId: true });
+
+    return data;
   }
 });

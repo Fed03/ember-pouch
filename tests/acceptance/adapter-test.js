@@ -71,3 +71,27 @@ test('it deletes an existing record', function(assert) {
     });
   });
 });
+
+test('it updates an existing record', function(assert) {
+  assert.expect(2);
+  
+  return Ember.run(() => {
+    const doc = this.store.createRecord('tacoSoup', {
+      id: 'A',
+      flavor: 'foo'
+    });
+
+    return doc.save().then(newDoc => {
+      newDoc.set('flavor', 'bar');
+      return newDoc.save();
+    }).then(() => {
+      return findRaw('taco-soup_2_A');
+    }).then(updatedRecord => {
+      assert.equal(updatedRecord.data.flavor, 'bar', 'should have updated the attribute');
+
+      var recordInStore = this.store.peekRecord('tacoSoup', 'A');
+      assert.equal(updatedRecord._rev, recordInStore.get('rev'),
+        'should have associated the ember-data record with the updated rev');
+    });
+  });
+});
