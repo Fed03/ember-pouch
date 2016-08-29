@@ -13,6 +13,8 @@ const extractData = function(type, docs) {
 
 export default DS.Adapter.extend({
 
+  coalesceFindRequests: true,
+
   init() {
     this.db = new PouchDB(this.options.localDb);
   },
@@ -112,12 +114,15 @@ export default DS.Adapter.extend({
     @param {DS.Store} store
     @param {DS.Model} type   the DS.Model class of the records
     @param {Array}    ids
-    @param {Array} snapshots
     @return {Promise} promise
   */
-  // findMany(store, type, ids, snapshots) {
-  //
-  // },
+  findMany(store, type, ids) {
+    this._setSchema(type);
+
+    return this.get('db').rel.find(type.modelName, ids).then(docs => {
+      return extractData(type, docs);
+    });
+  },
   /**
     @method _setSchema
     @private
