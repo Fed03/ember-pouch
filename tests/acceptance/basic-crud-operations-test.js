@@ -2,7 +2,7 @@ import Ember from 'ember';
 import { test } from 'qunit';
 import moduleForPouch from '../../tests/helpers/module-for-pouch-acceptance';
 
-moduleForPouch('Acceptance | pouchdb-adapter', {
+moduleForPouch('Acceptance | basic-crud-operations', {
   beforeEach() {
     this.store = this.application.__container__.lookup('service:store');
   }
@@ -74,7 +74,7 @@ test('it deletes an existing record', function(assert) {
 
 test('it updates an existing record', function(assert) {
   assert.expect(2);
-  
+
   return Ember.run(() => {
     const doc = this.store.createRecord('tacoSoup', {
       id: 'A',
