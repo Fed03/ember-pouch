@@ -1,3 +1,4 @@
+import Ember from 'ember';
 import { test } from 'qunit';
 import moduleForPouch from '../../tests/helpers/module-for-pouch-acceptance';
 
@@ -7,7 +8,7 @@ moduleForPouch('Acceptance | relationships', {
   }
 });
 
-test('it tests something', function(assert) {
+test('it can find hasMany relationships', function(assert) {
   return createRaw([
     { _id: 'taco-soup_2_A', data: { flavor: 'foo', ingredients: ['X', 'Y'] } },
     { _id: 'taco-soup_2_B', data: { flavor: 'bar', ingredients: ['Z'] } },
@@ -15,7 +16,7 @@ test('it tests something', function(assert) {
     { _id: 'ingredient_2_Y', data: { name: 'tomato' } },
     { _id: 'ingredient_2_Z', data: { name: 'pork' } }
   ]).then(() => {
-    return this.store.find('tacoSoup', 'A');
+    return this.store.findRecord('taco-soup', 'A');
   }).then(found => {
     assert.equal(found.get('id'), 'A', 'should have found the requested item');
     return found.get('ingredients');
