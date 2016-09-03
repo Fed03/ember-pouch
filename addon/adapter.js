@@ -150,7 +150,7 @@ export default DS.Adapter.extend({
       return_docs: false
     }).on('change', (...args) => {
       Ember.run(() => {
-        this._updateDB(...args);
+        return this._updateDB(...args);
       });
     });
   },
@@ -159,17 +159,27 @@ export default DS.Adapter.extend({
     @method _updateDB
     @private
     @param {Object} changedDoc
+    @return {Promise}
   */
   _updateDB(changedDoc) {
-    const db = this.get('db').rel;
-    // If relational_pouch isn't initialized yet,
-    // there can't be any records in the store to update.
-    if (!db) {
-      return;
-    }
-    const relationalInfo = db.parseDocID(changedDoc.id);
-    const loadedDoc = this.store.peekRecord(relationalInfo.type, relationalInfo.id);
+    try {
+      const db = this.get('db').rel;
+      // If relational_pouch isn't initialized yet,
+      // there can't be any records in the store to update.
+      if (!db) {
+        return;
+      }
+      const relationalInfo = db.parseDocID(changedDoc.id);
+      const loadedDoc = this.store.peekRecord(relationalInfo.type, relationalInfo.id);
 
-    loadedDoc.reload();
+      // The record hasn't been loaded into the store; no need to reload its data.
+      if (!loadedDoc) {
+        return;
+      }
+
+      return loadedDoc.reload();
+    } catch (e) {
+      return Ember.RSVP.reject(e);
+    }
   }
 });

@@ -2,7 +2,7 @@ import Ember from 'ember';
 import { test } from 'qunit';
 import moduleForPouch from '../../tests/helpers/module-for-pouch-acceptance';
 
-const promiseToRunLater = function(callback, wait = 15) {
+const promiseToRunLater = function(callback, wait = 40) {
   return new Ember.RSVP.Promise((resolve) => {
     Ember.run.later(() => {
       callback();
@@ -11,7 +11,7 @@ const promiseToRunLater = function(callback, wait = 15) {
   });
 };
 
-moduleForPouch('Acceptance | relationships', {
+moduleForPouch('Acceptance | change-watcher', {
   beforeEach() {
     this.store = this.application.__container__.lookup('service:store');
   }
@@ -36,6 +36,30 @@ test('a loaded instance automatically reflects directly-made database changes', 
       return promiseToRunLater(() => {
         const alreadyLoadedSoupB = this.store.peekRecord('taco-soup', 'A');
         assert.equal(alreadyLoadedSoupB.get('flavor'), 'bar', 'the loaded instance should automatically reflect the change in the database');
+      });
+    });
+  });
+});
+
+test('a record that is not loaded stays not loaded when it is changed', function (assert) {
+  assert.expect(2);
+  return Ember.run(() => {
+    return putRaw([
+      {_id: 'taco-soup_2_A', data: { flavor: 'foo' } },
+      {_id: 'taco-soup_2_B', data: { flavor: 'foo' } },
+    ]).then(() => {
+      // we need to provide the rel object to Pouchdb via `setSchema`
+      // it's the only purpose of this line
+      return this.store.findRecord('taco-soup', 'B');
+    }).then(() => {
+      assert.equal(null, this.store.peekRecord('taco-soup', 'A'), 'test setup: record should not be loaded already');
+      return findRaw('taco-soup_2_A');
+    }).then(soupARecord => {
+      soupARecord.data.flavor = 'barbacoa';
+      return putRaw(soupARecord);
+    }).then(() => {
+      return promiseToRunLater(() => {
+        assert.equal(null, this.store.peekRecord('taco-soup', 'A'), 'the corresponding instance should still not be loaded');
       });
     });
   });
