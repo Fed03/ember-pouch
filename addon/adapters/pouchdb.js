@@ -2,18 +2,12 @@ import DS from 'ember-data';
 import PouchDB from 'pouchdb';
 import Ember from 'ember';
 
-const { String: { pluralize } } = Ember;
-
-const extractData = function(type, docs) {
-  const plural = pluralize(type.modelName);
-  if (docs[plural].length > 0) {
-    return docs[plural];
-  }
-};
+const { String: { pluralize, camelize } } = Ember;
 
 export default DS.Adapter.extend({
 
   coalesceFindRequests: true,
+  defaultSerializer: '-rest',
 
   init() {
     this.db = new PouchDB(this.options.localDb);
@@ -28,9 +22,7 @@ export default DS.Adapter.extend({
   */
   findRecord(store, type, id) {
     this._setSchema(type);
-    return this.get('db').rel.find(type.modelName, id).then(docs => {
-      return extractData(type, docs)[0];
-    });
+    return this.get('db').rel.find(type.modelName, id);
   },
 
   /**
@@ -44,9 +36,7 @@ export default DS.Adapter.extend({
     this._setSchema(type);
 
     const data = this._serializeToData(store, type, snapshot);
-    return this.get('db').rel.save(type.modelName, data).then(docs => {
-      return extractData(type, docs)[0];
-    });
+    return this.get('db').rel.save(type.modelName, data);
   },
 
   /**
@@ -60,9 +50,7 @@ export default DS.Adapter.extend({
     this._setSchema(type);
 
     const data = this._serializeToData(store, type, snapshot);
-    return this.get('db').rel.save(type.modelName, data).then(docs => {
-      return extractData(type, docs)[0];
-    });
+    return this.get('db').rel.save(type.modelName, data);
   },
 
   /**
@@ -91,9 +79,7 @@ export default DS.Adapter.extend({
   // TODO: sinceToken
   findAll(store, type/*, sinceToken*/) {
     this._setSchema(type);
-    return this.get('db').rel.find(type.modelName).then(docs => {
-      return extractData(type, docs);
-    });
+    return this.get('db').rel.find(type.modelName);
   },
 
   /**
@@ -119,9 +105,7 @@ export default DS.Adapter.extend({
   findMany(store, type, ids) {
     this._setSchema(type);
 
-    return this.get('db').rel.find(type.modelName, ids).then(docs => {
-      return extractData(type, docs);
-    });
+    return this.get('db').rel.find(type.modelName, ids);
   },
   /**
     @method _setSchema
@@ -151,6 +135,6 @@ export default DS.Adapter.extend({
 
     serializer.serializeIntoHash(data, type, snapshot, { includeId: true });
 
-    return data;
+    return data[camelize(type.modelName)];
   }
 });
