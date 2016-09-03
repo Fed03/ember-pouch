@@ -1,4 +1,4 @@
-import Model from './models/pouchdb';
-import Adapter from './adapters/pouchdb';
+import Model from './model';
+import Adapter from './adapter';
 
 export { Model, Adapter };
