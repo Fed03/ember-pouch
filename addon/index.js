@@ -1,4 +1,5 @@
 import Model from './model';
 import Adapter from './adapter';
+import Serializer from './serializer';
 
-export { Model, Adapter };
+export { Model, Adapter, Serializer };
