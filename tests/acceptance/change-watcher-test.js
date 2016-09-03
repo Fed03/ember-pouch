@@ -64,3 +64,25 @@ test('a record that is not loaded stays not loaded when it is changed', function
     });
   });
 });
+
+test('a new record is not automatically loaded', function (assert) {
+  assert.expect(2);
+  return Ember.run(() => {
+    return putRaw([
+      {_id: 'taco-soup_2_A', data: { flavor: 'foo' } },
+      {_id: 'taco-soup_2_B', data: { flavor: 'foo' } },
+    ]).then(() => {
+      // we need to provide the rel object to Pouchdb via `setSchema`
+      // it's the only purpose of this line
+      return this.store.findRecord('taco-soup', 'B');
+    }).then(() => {
+      assert.equal(null, this.store.peekRecord('taco-soup', 'C'), 'test setup: record should not be loaded already');
+
+    return putRaw({ _id: 'taco-soup_2_C', data: { flavor: 'sofritas' } });
+    }).then(() => {
+      return promiseToRunLater(() => {
+        assert.equal(null, this.store.peekRecord('taco-soup', 'C'), 'the corresponding instance should still not be loaded');
+      });
+    });
+  });
+});
