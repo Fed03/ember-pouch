@@ -26,3 +26,54 @@ test('it can find hasMany relationships', function(assert) {
     assert.deepEqual(ingredients.mapBy('name'), ['carrot', 'tomato'], 'should have fully loaded the associated items');
   });
 });
+
+test('it updates parent record with associated record: mode 1', function(assert) {
+  return Ember.run(() => {
+    return this.store.createRecord('taco-soup', {
+      id: 'A',
+      flavor: 'foo'
+    }).save().then(soup => {
+      // Mode 1
+      const ingredient = this.store.createRecord('ingredient', {
+        name: 'carrot'
+      });
+      soup.get('ingredients').pushObject(ingredient);
+      return ingredient.save().then(() => {
+        return soup.save();
+      });
+    }).then(() => {
+      this.store.unloadAll();
+      return this.store.find('tacoSoup', 'A');
+    }).then(foundSoup => {
+      return foundSoup.get('ingredients');
+    }).then(ingredients => {
+      assert.deepEqual(ingredients.mapBy('name'), ['carrot'], 'should have fully loaded the associated items');
+    });
+  });
+});
+
+test('it updates parent record with associated record: mode 2', function(assert) {
+  return Ember.run(() => {
+    return this.store.createRecord('taco-soup', {
+      id: 'A',
+      flavor: 'foo'
+    }).save().then(soup => {
+      // Mode 2
+      const ingredient = this.store.createRecord('ingredient', {
+        name: 'carrot',
+        soup: soup
+      });
+
+      return ingredient.save().then(() => {
+        return soup.save();
+      });
+    }).then(() => {
+      this.store.unloadAll();
+      return this.store.find('tacoSoup', 'A');
+    }).then(foundSoup => {
+      return foundSoup.get('ingredients');
+    }).then(ingredients => {
+      assert.deepEqual(ingredients.mapBy('name'), ['carrot'], 'should have fully loaded the associated items');
+    });
+  });
+});
