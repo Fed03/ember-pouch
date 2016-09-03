@@ -9,7 +9,7 @@ moduleForPouch('Acceptance | relationships', {
 });
 
 test('it can find hasMany relationships', function(assert) {
-  return createRaw([
+  return putRaw([
     { _id: 'taco-soup_2_A', data: { flavor: 'foo', ingredients: ['X', 'Y'] } },
     { _id: 'taco-soup_2_B', data: { flavor: 'bar', ingredients: ['Z'] } },
     { _id: 'ingredient_2_X', data: { name: 'carrot' } },

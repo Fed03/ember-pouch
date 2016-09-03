@@ -22,7 +22,7 @@
     "currentURL",
     "currentPath",
     "currentRouteName",
-    "createRaw",
+    "putRaw",
     "findRaw"
   ],
   "node": false,

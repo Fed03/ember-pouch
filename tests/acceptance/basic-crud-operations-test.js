@@ -9,7 +9,7 @@ moduleForPouch('Acceptance | basic-crud-operations', {
 });
 
 test('it can find one doc', function(assert) {
-  return createRaw([
+  return putRaw([
     { _id: 'taco-soup_2_A', data: { flavor: 'al pastor' } },
     { _id: 'burrito-shake_2_X', data: { consistency: 'smooth' } }
   ]).then(() => {
@@ -21,7 +21,7 @@ test('it can find one doc', function(assert) {
 });
 
 test('it can find all docs of one type', function(assert) {
-  return createRaw([
+  return putRaw([
     { _id: 'taco-soup_2_A', data: { flavor: 'al pastor' } },
     { _id: 'taco-soup_2_B', data: { flavor: 'black bean' } },
     { _id: 'burrito-shake_2_X', data: { consistency: 'smooth' } }
