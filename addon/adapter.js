@@ -11,6 +11,7 @@ export default DS.Adapter.extend({
 
   init() {
     this.db = new PouchDB(this.options.localDb);
+    this._setupChangesListener();
   },
 
   /**
@@ -136,5 +137,39 @@ export default DS.Adapter.extend({
     serializer.serializeIntoHash(data, type, snapshot, { includeId: true });
 
     return data[camelize(type.modelName)];
+  },
+
+  /**
+    @method _setupChangesListener
+    @private
+  */
+  _setupChangesListener() {
+    this.get('db').changes({
+      live: true,
+      since: 'now',
+      return_docs: false
+    }).on('change', (...args) => {
+      Ember.run(() => {
+        this._updateDB(...args);
+      });
+    });
+  },
+
+  /**
+    @method _updateDB
+    @private
+    @param {Object} changedDoc
+  */
+  _updateDB(changedDoc) {
+    const db = this.get('db').rel;
+    // If relational_pouch isn't initialized yet,
+    // there can't be any records in the store to update.
+    if (!db) {
+      return;
+    }
+    const relationalInfo = db.parseDocID(changedDoc.id);
+    const loadedDoc = this.store.peekRecord(relationalInfo.type, relationalInfo.id);
+
+    loadedDoc.reload();
   }
 });
