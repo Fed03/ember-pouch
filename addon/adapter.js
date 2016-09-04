@@ -1,8 +1,13 @@
 import DS from 'ember-data';
 import PouchDB from 'pouchdb';
 import Ember from 'ember';
+import DbError from './db-error';
 
-const { String: { pluralize, camelize } } = Ember;
+const {
+  run,
+  String: { pluralize, camelize },
+  RSVP: { Promise }
+} = Ember;
 
 export default DS.Adapter.extend({
 
@@ -149,7 +154,7 @@ export default DS.Adapter.extend({
       since: 'now',
       return_docs: false
     }).on('change', (...args) => {
-      Ember.run(() => {
+      run(() => {
         return this._updateDB(...args);
       });
     });
@@ -163,45 +168,68 @@ export default DS.Adapter.extend({
   */
   _updateDB(changedDoc) {
     try {
-      const db = this.get('db').rel;
-      // If relational_pouch isn't initialized yet,
-      // there can't be any records in the store to update.
-      if (!db) {
-        return;
-      }
-      const relationalInfo = db.parseDocID(changedDoc.id);
-      if (!relationalInfo.type) {
-        return;
-      }
-
-      try {
-        this.store.modelFor(relationalInfo.type);
-      } catch (e) {
-        return;
-      }
-
-      const loadedDoc = this.store.peekRecord(relationalInfo.type, relationalInfo.id);
-
-      // The record hasn't been loaded into the store; no need to reload its data.
-      if (!loadedDoc) {
-        return;
-      }
-
-      if (!loadedDoc.get('isLoaded') || loadedDoc.get('hasDirtyAttributes')) {
-        // The record either hasn't loaded yet or has unpersisted local changes.
-        // In either case, we don't want to refresh it in the store
-        // (and for some substates, attempting to do so will result in an error).
-        return;
-      }
+      const relationalInfo = this._getRelationalInfo(changedDoc);
+      const loadedDoc = this._getLoadedDoc(relationalInfo.type, relationalInfo.id);
 
       if (changedDoc.deleted) {
         loadedDoc.unloadRecord();
-        return Ember.RSVP.resolve();
+        return Promise.resolve();
       }
 
       return loadedDoc.reload();
     } catch (e) {
-      return Ember.RSVP.reject(e);
+      if (e instanceof DbError) {
+        return Promise.resolve();
+      }
+      return Promise.reject(e);
     }
+  },
+
+  /**
+    @method _getRelationalInfo
+    @private
+    @param {Object} doc The doc object coming from Pouchdb
+    @return {Object}
+  */
+  _getRelationalInfo(doc) {
+    const db = this.get('db').rel;
+    // If relational_pouch isn't initialized yet,
+    // there can't be any records in the store to update.
+    if (!db) {
+      throw new DbError('relational-pouch isn\'t initialized yet.');
+    }
+
+    const relationalInfo = db.parseDocID(doc.id);
+    if (!relationalInfo.type) {
+      throw new DbError('The doc has no relational identifier.');
+    }
+
+    try {
+      this.store.modelFor(relationalInfo.type);
+    } catch (e) {
+      throw new DbError(e);
+    }
+
+    return relationalInfo;
+  },
+
+  /**
+    @method _getLoadedDoc
+    @private
+    @param {String} type
+    @param {Integer} id
+    @return {DS.Model}
+  */
+  _getLoadedDoc(type, id) {
+    const loadedDoc = this.store.peekRecord(type, id);
+
+    if (!loadedDoc || !loadedDoc.get('isLoaded') || loadedDoc.get('hasDirtyAttributes')) {
+      // The record either hasn't loaded yet or has unpersisted local changes.
+      // In either case, we don't want to refresh it in the store
+      // (and for some substates, attempting to do so will result in an error).
+      throw new DbError('The doc isn\'t loaded into the store yet.');
+    }
+
+    return loadedDoc;
   }
 });
