@@ -170,6 +170,10 @@ export default DS.Adapter.extend({
         return;
       }
       const relationalInfo = db.parseDocID(changedDoc.id);
+      if (!relationalInfo.type) {
+        return;
+      }
+
       const loadedDoc = this.store.peekRecord(relationalInfo.type, relationalInfo.id);
 
       // The record hasn't been loaded into the store; no need to reload its data.

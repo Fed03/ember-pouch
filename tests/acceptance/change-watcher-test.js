@@ -109,3 +109,20 @@ test('a deleted record is automatically unloaded', function (assert) {
     });
   });
 });
+
+test('a change to a record with a non-relational-pouch ID does not cause an error', function (assert) {
+  assert.expect(0);
+  return Ember.run(() => {
+    return putRaw({
+      _id: 'taco-soup_2_A',
+      data: { flavor: 'foo' }
+    }).then(() => {
+      // do some op to cause relational-pouch to be initialized
+      return this.store.find('taco-soup', 'A');
+    }).then(() => {
+      return putRaw({
+        _id: '_design/ingredient-use'
+      });
+    });
+  });
+});
