@@ -14,7 +14,8 @@ const promiseToRunLater = function(callback, wait = 40) {
 moduleForPouch('Acceptance | change-watcher', {
   beforeEach() {
     this.store = this.application.__container__.lookup('service:store');
-    this.db = this.application.__container__.lookup('adapter:application').get('db');
+    this.adapter = this.application.__container__.lookup('adapter:application');
+    this.db = this.adapter.get('db');
   }
 });
 
@@ -139,6 +140,32 @@ test('a change to a record of an unknown type does not cause an error', function
     }).then(() => {
       return putRaw({
         _id: 'burrito-shake_2_X', data: { consistency: 'chunky' }
+      });
+    });
+  });
+});
+
+test('a new record is automatically loaded if flag is true', function (assert) {
+  assert.expect(4);
+  return Ember.run(() => {
+    return putRaw({
+      _id: 'tomato-soup_2_A',
+      data: { flavor: 'foo' }
+    }).then(() => {
+      return this.store.findRecord('tomato-soup', 'A');
+    }).then(soupA => {
+      assert.equal('foo', soupA.get('flavor'), 'the loaded instance should reflect the initial test data');
+      assert.equal(null, this.store.peekRecord('tomato-soup', 'B'), 'test setup: record should not be loaded already');
+
+      return putRaw({
+        _id: 'tomato-soup_2_B',
+        data: { flavor: 'sofritas' }
+      });
+    }).then(() => {
+      return promiseToRunLater(() => {
+        var alreadyLoadedSoupB = this.store.peekRecord('tomato-soup', 'B');
+        assert.ok(alreadyLoadedSoupB, 'the corresponding instance should now be loaded');
+        assert.equal(alreadyLoadedSoupB.get('flavor'), 'sofritas', 'the corresponding instance should now be loaded with the right data');
       });
     });
   });

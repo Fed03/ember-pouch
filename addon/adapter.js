@@ -12,6 +12,7 @@ const {
 export default DS.Adapter.extend({
 
   coalesceFindRequests: true,
+  autoLoadNewDoc: false,
   defaultSerializer: '-rest',
 
   init() {
@@ -113,6 +114,22 @@ export default DS.Adapter.extend({
 
     return this.get('db').rel.find(type.modelName, ids);
   },
+
+
+  /**
+    @method unloadedDocumentChanged
+    @param {String} type
+    @param {Integer} id
+    @return {Promise}
+  */
+  unloadedDocumentChanged(type, id) {
+    return this.get('db').rel.find(type, id).then(doc => {
+      run(() => {
+        this.store.pushPayload(type, doc);
+      });
+    });
+  },
+
   /**
     @method _setSchema
     @private
@@ -171,6 +188,13 @@ export default DS.Adapter.extend({
       const relationalInfo = this._getRelationalInfo(changedDoc);
       const loadedDoc = this._getLoadedDoc(relationalInfo.type, relationalInfo.id);
 
+      if (!loadedDoc) {
+        if (this.get('autoLoadNewDoc')) {
+          return this.unloadedDocumentChanged(relationalInfo.type, relationalInfo.id);
+        }
+        return Promise.resolve();
+      }
+
       if (changedDoc.deleted) {
         loadedDoc.unloadRecord();
         return Promise.resolve();
@@ -223,7 +247,12 @@ export default DS.Adapter.extend({
   _getLoadedDoc(type, id) {
     const loadedDoc = this.store.peekRecord(type, id);
 
-    if (!loadedDoc || !loadedDoc.get('isLoaded') || loadedDoc.get('hasDirtyAttributes')) {
+    if (!loadedDoc) {
+      // The record hasn't been loaded into the store; no need to reload its data.
+      return;
+    }
+
+    if (!loadedDoc.get('isLoaded') || loadedDoc.get('hasDirtyAttributes')) {
       // The record either hasn't loaded yet or has unpersisted local changes.
       // In either case, we don't want to refresh it in the store
       // (and for some substates, attempting to do so will result in an error).
