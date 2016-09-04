@@ -177,6 +177,18 @@ export default DS.Adapter.extend({
         return;
       }
 
+      if (!loadedDoc.get('isLoaded') || loadedDoc.get('hasDirtyAttributes')) {
+        // The record either hasn't loaded yet or has unpersisted local changes.
+        // In either case, we don't want to refresh it in the store
+        // (and for some substates, attempting to do so will result in an error).
+        return;
+      }
+
+      if (changedDoc.deleted) {
+        loadedDoc.unloadRecord();
+        return Ember.RSVP.resolve();
+      }
+
       return loadedDoc.reload();
     } catch (e) {
       return Ember.RSVP.reject(e);

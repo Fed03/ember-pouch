@@ -14,6 +14,7 @@ const promiseToRunLater = function(callback, wait = 40) {
 moduleForPouch('Acceptance | change-watcher', {
   beforeEach() {
     this.store = this.application.__container__.lookup('service:store');
+    this.db = this.application.__container__.lookup('adapter:application').get('db');
   }
 });
 
@@ -82,6 +83,28 @@ test('a new record is not automatically loaded', function (assert) {
     }).then(() => {
       return promiseToRunLater(() => {
         assert.equal(null, this.store.peekRecord('taco-soup', 'C'), 'the corresponding instance should still not be loaded');
+      });
+    });
+  });
+});
+
+test('a deleted record is automatically unloaded', function (assert) {
+  assert.expect(2);
+  return Ember.run(() => {
+    return putRaw({
+      _id: 'taco-soup_2_A',
+      data: { flavor: 'foo' }
+    }).then(() => {
+      return this.store.find('taco-soup', 'A');
+    }).then(soupA => {
+      assert.equal('foo', soupA.get('flavor'), 'the loaded instance should reflect the initial test data');
+
+      return findRaw('taco-soup_2_A');
+    }).then((soupBRecord) => {
+      return this.db.remove(soupBRecord);
+    }).then(() => {
+      return promiseToRunLater(() => {
+        assert.equal(null, this.store.peekRecord('taco-soup', 'A'), 'the corresponding instance should no longer be loaded');
       });
     });
   });
