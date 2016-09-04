@@ -174,6 +174,12 @@ export default DS.Adapter.extend({
         return;
       }
 
+      try {
+        this.store.modelFor(relationalInfo.type);
+      } catch (e) {
+        return;
+      }
+
       const loadedDoc = this.store.peekRecord(relationalInfo.type, relationalInfo.id);
 
       // The record hasn't been loaded into the store; no need to reload its data.
