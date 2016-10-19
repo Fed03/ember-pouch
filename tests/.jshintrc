@@ -23,7 +23,8 @@
     "currentPath",
     "currentRouteName",
     "putRaw",
-    "findRaw"
+    "findRaw",
+    "createQueryIndex"
   ],
   "node": false,
   "browser": false,
