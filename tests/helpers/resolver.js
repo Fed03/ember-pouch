@@ -1,5 +1,7 @@
 import Resolver from '../../resolver';
 import config from '../../config/environment';
+import './put-raw';
+import './find-raw';
 
 const resolver = Resolver.create();
 
