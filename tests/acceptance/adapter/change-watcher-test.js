@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import { test } from 'qunit';
-import moduleForPouch from '../../tests/helpers/module-for-pouch-acceptance';
+import moduleForPouch from '../../../tests/helpers/module-for-pouch-acceptance';
 
 const promiseToRunLater = function(callback, wait = 40) {
   return new Ember.RSVP.Promise((resolve) => {

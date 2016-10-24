@@ -3,6 +3,7 @@ import config from '../../config/environment';
 import './put-raw';
 import './find-raw';
 import './create-query-index';
+import './assert-attachments';
 
 const resolver = Resolver.create();
 

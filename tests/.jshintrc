@@ -24,7 +24,8 @@
     "currentRouteName",
     "putRaw",
     "findRaw",
-    "createQueryIndex"
+    "createQueryIndex",
+    "assertAttachments"
   ],
   "node": false,
   "browser": false,

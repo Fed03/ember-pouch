@@ -1,6 +1,6 @@
 import Ember from 'ember';
 import { test } from 'qunit';
-import moduleForPouch from '../../tests/helpers/module-for-pouch-acceptance';
+import moduleForPouch from '../../../tests/helpers/module-for-pouch-acceptance';
 
 moduleForPouch('Acceptance | basic-crud-operations', {
   beforeEach() {

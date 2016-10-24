@@ -1,5 +1,5 @@
 import { test } from 'qunit';
-import moduleForPouch from '../../tests/helpers/module-for-pouch-acceptance';
+import moduleForPouch from '../../../tests/helpers/module-for-pouch-acceptance';
 
 moduleForPouch('Acceptance | query-method', {
   beforeEach() {
