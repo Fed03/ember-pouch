@@ -1,5 +1,5 @@
 class QueryBuilder {
-  constructor(db, query/*, recordArray*/) {
+  constructor(db, query) {
     this.db = db;
     this._selectors = query.filter;
     this._sortRules = query.sort;

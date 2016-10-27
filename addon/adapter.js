@@ -2,6 +2,7 @@ import DS from 'ember-data';
 import PouchDB from 'pouchdb';
 import Ember from 'ember';
 import DbError from './db-error';
+import QueryBuilder from './query-builder';
 
 const {
   run,
@@ -117,12 +118,31 @@ export default DS.Adapter.extend({
     @param {DS.Store} store
     @param {DS.Model} type
     @param {Object} query
-    @param {DS.AdapterPopulatedRecordArray} recordArray
     @return {Promise} promise
   */
-  // query(store, type, query, recordArray) {
-  //
-  // },
+  query(store, type, query) {
+    this._setSchema(type);
+
+    const builder = new QueryBuilder(this.get('db'), query);
+    return builder.query().then(raw => {
+      const modelName = this.getRecordTypeName(type);
+      return {
+        [pluralize(modelName)]: raw
+      };
+    });
+  },
+
+  /**
+    @method queryRecord
+    @param {DS.Store} store
+    @param {DS.Model} type
+    @param {Object} query
+    @return {Promise} promise
+  */
+  queryRecord(store, type, query) {
+    return this.query(store, type, query);
+  },
+
   /**
     TODO: Find multiple records at once if coalesceFindRequests is true.
 
