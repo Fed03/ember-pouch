@@ -1,6 +1,6 @@
 import Model from './model';
 import Adapter from './adapter';
-import Serializer from './serializers/pouch';
+import Serializer from './serializer';
 
 export {
   Model,

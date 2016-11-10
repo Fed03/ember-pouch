@@ -3,7 +3,8 @@ import DS from 'ember-data';
 
 const {
   get,
-  isNone
+  isNone,
+  isArray
 } = Ember;
 const keys = Object.keys || Ember.keys;
 
@@ -11,8 +12,8 @@ export default DS.Transform.extend({
   deserialize: function(serialized) {
     if (isNone(serialized)) { return []; }
 
-    return keys(serialized).map(function (attachmentName) {
-      let attachment = serialized[attachmentName];
+    return keys(serialized).map(attachmentName => {
+      const attachment = serialized[attachmentName];
       return Ember.Object.create({
         name: attachmentName,
         content_type: attachment.content_type,
@@ -25,9 +26,9 @@ export default DS.Transform.extend({
   },
 
   serialize: function(deserialized) {
-    if (!Ember.isArray(deserialized)) { return null; }
+    if (!isArray(deserialized)) { return null; }
 
-    return deserialized.reduce(function (acc, attachment) {
+    return deserialized.reduce((acc, attachment) => {
       const serialized = {
         content_type: get(attachment, 'content_type'),
       };
@@ -35,8 +36,7 @@ export default DS.Transform.extend({
         serialized.stub = true;
         serialized.length = get(attachment, 'length');
         serialized.digest = get(attachment, 'digest');
-      }
-      else {
+      } else {
         serialized.data = get(attachment, 'data');
         serialized.length = get(attachment, 'length');
       }
