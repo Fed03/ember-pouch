@@ -18,7 +18,7 @@ const {
     camelize,
     classify
   },
-  RSVP
+  // RSVP
 } = Ember;
 
 //BelongsToRelationship.reopen({
@@ -487,13 +487,8 @@ export default DS.RESTAdapter.extend({
   },
 
   _dbOperation(promise) {
-    this.operationsWaiter.incrementPendingOps();
-    return promise().then(result => {
-      this.operationsWaiter.decrementPendingOps();
-      return result;
-    }).catch(() => {
-      this.operationsWaiter.decrementPendingOps();
-      return RSVP.reject(...arguments);
-    });
+    return Ember.run(() => {
+      return promise();
+    })
   }
 });
