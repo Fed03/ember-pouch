@@ -1,65 +1,45 @@
-import Ember from 'ember';
-import DS from 'ember-data';
-import OperationsWaiter from 'ember-pouch/operations-waiter';
-//import BelongsToRelationship from 'ember-data/-private/system/relationships/state/belongs-to';
+import Ember from "ember";
+import DS from "ember-data";
+import OperationsWaiter from "ember-pouch/operations-waiter";
+import { extractDeleteRecord } from "../utils";
 
-import {
-  extractDeleteRecord
-} from '../utils';
-
-const {
-  getOwner,
-  run: {
-    bind
-  },
-  on,
-  String: {
-    pluralize,
-    camelize,
-    classify
-  },
-  RSVP
-} = Ember;
-
-//BelongsToRelationship.reopen({
-//  findRecord() {
-//    return this._super().catch(() => {
-//      //not found: deleted
-//      this.clear();
-//    });
-//  }
-//});
+const { getOwner, run: { bind }, on, String: { pluralize, camelize, classify }, RSVP } = Ember;
 
 export default DS.RESTAdapter.extend({
   coalesceFindRequests: false,
-  operationsWaiter: new OperationsWaiter,
+  operationsWaiter: new OperationsWaiter(),
 
   // The change listener ensures that individual records are kept up to date
   // when the data in the database changes. This makes ember-data 2.0's record
   // reloading redundant.
-  shouldReloadRecord: function () { return false; },
-  shouldBackgroundReloadRecord: function () { return false; },
-  _onInit : on('init', function()  {
+  shouldReloadRecord: function() {
+    return false;
+  },
+  shouldBackgroundReloadRecord: function() {
+    return false;
+  },
+  _onInit: on("init", function() {
     this._startChangesToStoreListener();
   }),
   _startChangesToStoreListener: function() {
-    var db = this.get('db');
-    if (db && !this.changes) { // only run this once
-      var onChangeListener = bind(this, 'onChange');
-      this.set('onChangeListener', onChangeListener);
+    var db = this.get("db");
+    if (db && !this.changes) {
+      // only run this once
+      var onChangeListener = bind(this, "onChange");
+      this.set("onChangeListener", onChangeListener);
       this.changes = db.changes({
-        since: 'now',
+        since: "now",
         live: true,
         returnDocs: false
       });
-      this.changes.on('change', onChangeListener);
+      this.changes.on("change", onChangeListener);
     }
   },
 
   _stopChangesListener: function() {
     if (this.changes) {
-      var onChangeListener = this.get('onChangeListener');
-      this.changes.removeListener('change', onChangeListener);
+      var onChangeListener = this.get("onChangeListener");
+      this.changes.removeListener("change", onChangeListener);
       this.changes.cancel();
       this.changes = undefined;
     }
@@ -75,30 +55,23 @@ export default DS.RESTAdapter.extend({
     }
 
     this._schema = null;
-    this.set('db', db);
+    this.set("db", db);
     this._startChangesToStoreListener();
   },
-  onChange: function (change) {
+  onChange: function(change) {
     // If relational_pouch isn't initialized yet, there can't be any records
     // in the store to update.
-    if (!this.get('db').rel) { return; }
-
-    var obj = this.get('db').rel.parseDocID(change.id);
-    // skip changes for non-relational_pouch docs. E.g., design docs.
-    if (!obj.type || !obj.id || obj.type === '') { return; }
-
-    var store = this.store;
-
-    if (this.waitingForConsistency[change.id]) {
-      let promise = this.waitingForConsistency[change.id];
-      delete this.waitingForConsistency[change.id];
-      if (change.deleted) {
-        promise.reject("deleted");
-      } else {
-        promise.resolve(this._findRecord(obj.type, obj.id));
-      }
+    if (!this.get("db").rel) {
       return;
     }
+
+    var obj = this.get("db").rel.parseDocID(change.id);
+    // skip changes for non-relational_pouch docs. E.g., design docs.
+    if (!obj.type || !obj.id || obj.type === "") {
+      return;
+    }
+
+    var store = this.store;
 
     try {
       store.modelFor(obj.type);
@@ -114,7 +87,7 @@ export default DS.RESTAdapter.extend({
       this.unloadedDocumentChanged(obj);
       return;
     }
-    if (!recordInStore.get('isLoaded') || recordInStore.get('hasDirtyAttributes')) {
+    if (!recordInStore.get("isLoaded") || recordInStore.get("hasDirtyAttributes")) {
       // The record either hasn't loaded yet or has unpersisted local changes.
       // In either case, we don't want to refresh it in the store
       // (and for some substates, attempting to do so will result in an error).
@@ -145,17 +118,16 @@ export default DS.RESTAdapter.extend({
     this._stopChangesListener();
   },
 
-  _init: function (store, type) {
+  _init: function(store, type) {
     var self = this,
-        recordTypeName = this.getRecordTypeName(type);
-    if (!this.get('db') || typeof this.get('db') !== 'object') {
-      throw new Error('Please set the `db` property on the adapter.');
+      recordTypeName = this.getRecordTypeName(type);
+    if (!this.get("db") || typeof this.get("db") !== "object") {
+      throw new Error("Please set the `db` property on the adapter.");
     }
 
-    if (!Ember.get(type, 'attributes').has('rev')) {
+    if (!Ember.get(type, "attributes").has("rev")) {
       var modelName = classify(recordTypeName);
-      throw new Error('Please add a `rev` attribute of type `string`' +
-        ' on the ' + modelName + ' model.');
+      throw new Error("Please add a `rev` attribute of type `string`" + " on the " + modelName + " model.");
     }
 
     this._schema = this._schema || [];
@@ -177,35 +149,35 @@ export default DS.RESTAdapter.extend({
     };
 
     if (type.documentType) {
-      schemaDef['documentType'] = type.documentType;
+      schemaDef["documentType"] = type.documentType;
     }
 
-    let config = getOwner(this).resolveRegistration('config:environment');
-    let dontsavedefault = config['emberpouch'] && config['emberpouch']['dontsavehasmany'];
+    let config = getOwner(this).resolveRegistration("config:environment");
+    let dontsavedefault = config["emberpouch"] && config["emberpouch"]["dontsavehasmany"];
     // else it's new, so update
     this._schema.push(schemaDef);
     // check all the subtypes
     // We check the type of `rel.type`because with ember-data beta 19
     // `rel.type` switched from DS.Model to string
-    type.eachRelationship(function (_, rel) {
-      if (rel.kind !== 'belongsTo' && rel.kind !== 'hasMany') {
+    type.eachRelationship(function(_, rel) {
+      if (rel.kind !== "belongsTo" && rel.kind !== "hasMany") {
         // TODO: support inverse as well
         return; // skip
       }
       var relDef = {},
-          relModel = (typeof rel.type === 'string' ? store.modelFor(rel.type) : rel.type);
+        relModel = typeof rel.type === "string" ? store.modelFor(rel.type) : rel.type;
       if (relModel) {
         let includeRel = true;
         rel.options = rel.options || {};
-        if (typeof(rel.options.async) === "undefined") {
-          rel.options.async = config.emberpouch && !Ember.isEmpty(config.emberpouch.async) ? config.emberpouch.async : true;//default true from https://github.com/emberjs/data/pull/3366
+        if (typeof rel.options.async === "undefined") {
+          rel.options.async = config.emberpouch && !Ember.isEmpty(config.emberpouch.async) ? config.emberpouch.async : true; //default true from https://github.com/emberjs/data/pull/3366
         }
         let options = Object.create(rel.options);
-        if (rel.kind === 'hasMany' && (options.dontsave || typeof(options.dontsave) === 'undefined' && dontsavedefault)) {
+        if (rel.kind === "hasMany" && (options.dontsave || (typeof options.dontsave === "undefined" && dontsavedefault))) {
           let inverse = type.inverseFor(rel.key, store);
           if (inverse) {
-            if (inverse.kind === 'belongsTo') {
-              self.get('db').createIndex({index: { fields: ['data.' + inverse.name, '_id'] }});
+            if (inverse.kind === "belongsTo") {
+              self.get("db").createIndex({ index: { fields: ["data." + inverse.name, "_id"] } });
               if (options.async) {
                 includeRel = false;
               } else {
@@ -229,10 +201,10 @@ export default DS.RESTAdapter.extend({
       }
     });
 
-    this.get('db').setSchema(this._schema);
+    this.get("db").setSchema(this._schema);
   },
 
-  _recordToData: function (store, type, record) {
+  _recordToData: function(store, type, record) {
     var data = {};
     // Though it would work to use the default recordTypeName for modelName &
     // serializerKey here, these uses are conceptually distinct and may vary
@@ -241,12 +213,7 @@ export default DS.RESTAdapter.extend({
     var serializerKey = camelize(modelName);
     var serializer = store.serializerFor(modelName);
 
-    serializer.serializeIntoHash(
-      data,
-      type,
-      record,
-      {includeId: true}
-    );
+    serializer.serializeIntoHash(data, type, record, { includeId: true });
 
     data = data[serializerKey];
 
@@ -263,8 +230,8 @@ export default DS.RESTAdapter.extend({
    * ex: 'name' become 'data.name'
    */
   _dataKey: function(key) {
-    var dataKey ='data.' + key;
-    return ""+ dataKey + "";
+    var dataKey = "data." + key;
+    return "" + dataKey + "";
   },
 
   /**
@@ -276,15 +243,17 @@ export default DS.RESTAdapter.extend({
     var selectorKeys = [];
 
     for (var key in selector) {
-      if(selector.hasOwnProperty(key)){
+      if (selector.hasOwnProperty(key)) {
         selectorKeys.push(key);
       }
     }
 
-    selectorKeys.forEach(function(key) {
-      var dataKey = this._dataKey(key);
-      dataSelector[dataKey] = selector[key];
-    }.bind(this));
+    selectorKeys.forEach(
+      function(key) {
+        var dataKey = this._dataKey(key);
+        dataSelector[dataKey] = selector[key];
+      }.bind(this)
+    );
 
     return dataSelector;
   },
@@ -295,19 +264,21 @@ export default DS.RESTAdapter.extend({
    * Ex: sort: [{series: 'desc'}] will became [{'data.series': 'desc'}]
    */
   _buildSort: function(sort) {
-    return sort.map(function (value) {
-      var sortKey = {};
-      if (typeof value === 'object' && value !== null) {
-        for (var key in value) {
-          if(value.hasOwnProperty(key)){
-            sortKey[this._dataKey(key)] = value[key];
+    return sort.map(
+      function(value) {
+        var sortKey = {};
+        if (typeof value === "object" && value !== null) {
+          for (var key in value) {
+            if (value.hasOwnProperty(key)) {
+              sortKey[this._dataKey(key)] = value[key];
+            }
           }
+        } else {
+          return this._dataKey(value);
         }
-      } else {
-        return this._dataKey(value);
-      }
-      return sortKey;
-    }.bind(this));
+        return sortKey;
+      }.bind(this)
+    );
   },
 
   /**
@@ -330,22 +301,22 @@ export default DS.RESTAdapter.extend({
     // TODO: use sinceToken
     this._init(store, type);
     return this._dbOperation(() => {
-      return this.get('db').rel.find(this.getRecordTypeName(type));
+      return this.get("db").rel.find(this.getRecordTypeName(type));
     });
   },
 
   findMany: function(store, type, ids) {
     this._init(store, type);
     return this._dbOperation(() => {
-      return this.get('db').rel.find(this.getRecordTypeName(type), ids);
+      return this.get("db").rel.find(this.getRecordTypeName(type), ids);
     });
   },
 
   findHasMany: function(store, record, link, rel) {
     let inverse = record.type.inverseFor(rel.key, store);
-    if (inverse && inverse.kind === 'belongsTo') {
+    if (inverse && inverse.kind === "belongsTo") {
       return this._dbOperation(() => {
-        return this.get('db').rel.findHasMany(camelize(rel.type), inverse.name, record.id);
+        return this.get("db").rel.findHasMany(camelize(rel.type), inverse.name, record.id);
       });
     } else {
       let result = {};
@@ -358,7 +329,7 @@ export default DS.RESTAdapter.extend({
     this._init(store, type);
 
     var recordTypeName = this.getRecordTypeName(type);
-    var db = this.get('db');
+    var db = this.get("db");
 
     var queryParams = {
       selector: this._buildSelector(query.filter)
@@ -384,7 +355,7 @@ export default DS.RESTAdapter.extend({
       return this.query(store, type, query).then(results => {
         let recordType = this.getRecordTypeName(type);
         let recordTypePlural = pluralize(recordType);
-        if(results[recordTypePlural].length > 0){
+        if (results[recordTypePlural].length > 0) {
           results[recordType] = results[recordTypePlural][0];
         } else {
           results[recordType] = null;
@@ -402,11 +373,11 @@ export default DS.RESTAdapter.extend({
    * `findRecord`. This can be removed when the library drops support
    * for deprecated methods.
   */
-  find: function (store, type, id) {
+  find: function(store, type, id) {
     return this.findRecord(store, type, id);
   },
 
-  findRecord: function (store, type, id) {
+  findRecord: function(store, type, id) {
     this._init(store, type);
     var recordTypeName = this.getRecordTypeName(type);
     return this._findRecord(recordTypeName, id);
@@ -414,49 +385,23 @@ export default DS.RESTAdapter.extend({
 
   _findRecord(recordTypeName, id) {
     return this._dbOperation(() => {
-      return this.get('db').rel.find(recordTypeName, id).then(payload => {
-        // Ember Data chokes on empty payload, this function throws
-        // an error when the requested data is not found
-        if (typeof payload === 'object' && payload !== null) {
-          var singular = recordTypeName;
-          var plural = pluralize(recordTypeName);
+      return this.get("db")
+        .rel.find(recordTypeName, id)
+        .then(payload => {
+          // Ember Data chokes on empty payload, this function throws
+          // an error when the requested data is not found
+          if (typeof payload === "object" && payload !== null) {
+            var singular = recordTypeName;
+            var plural = pluralize(recordTypeName);
 
-          var results = payload[singular] || payload[plural];
-          if (results && results.length > 0) {
-            return payload;
+            var results = payload[singular] || payload[plural];
+            if (results && results.length > 0) {
+              return payload;
+            }
           }
-        }
 
-        return this._eventuallyConsistent(recordTypeName, id);
-      });
-    });
-  },
-
-  //TODO: cleanup promises on destroy or db change?
-  waitingForConsistency: {},
-  _eventuallyConsistent: function(type, id) {
-    let pouchID = this.get('db').rel.makeDocID({type, id});
-    let defer = Ember.RSVP.defer();
-    this.waitingForConsistency[pouchID] = defer;
-
-    return this.get('db').rel.isDeleted(type, id).then(deleted => {
-      //TODO: should we test the status of the promise here? Could it be handled in onChange already?
-      if (deleted) {
-        delete this.waitingForConsistency[pouchID];
-        throw "Document of type '" + type + "' with id '" + id + "' is deleted.";
-      } else if (deleted === null) {
-        return defer.promise;
-      } else {
-        Ember.assert('Status should be existing', deleted === false);
-        //TODO: should we reject or resolve the promise? or does JS GC still clean it?
-        if (this.waitingForConsistency[pouchID]) {
-          delete this.waitingForConsistency[pouchID];
-          return this._findRecord(type, id);
-        } else {
-          //findRecord is already handled by onChange
-          return defer.promise;
-        }
-      }
+          throw new Error('Not found: type "' + recordTypeName + '" with id "' + id + '"');
+        });
     });
   },
 
@@ -465,35 +410,39 @@ export default DS.RESTAdapter.extend({
     var data = this._recordToData(store, type, record);
 
     return this._dbOperation(() => {
-      return this.get('db').rel.save(this.getRecordTypeName(type), data);
+      return this.get("db").rel.save(this.getRecordTypeName(type), data);
     });
   },
 
-  updateRecord: function (store, type, record) {
+  updateRecord: function(store, type, record) {
     this._init(store, type);
     var data = this._recordToData(store, type, record);
 
     return this._dbOperation(() => {
-      return this.get('db').rel.save(this.getRecordTypeName(type), data);
+      return this.get("db").rel.save(this.getRecordTypeName(type), data);
     });
   },
 
-  deleteRecord: function (store, type, record) {
+  deleteRecord: function(store, type, record) {
     this._init(store, type);
     var data = this._recordToData(store, type, record);
     return this._dbOperation(() => {
-      return this.get('db').rel.del(this.getRecordTypeName(type), data).then(extractDeleteRecord);
+      return this.get("db")
+        .rel.del(this.getRecordTypeName(type), data)
+        .then(extractDeleteRecord);
     });
   },
 
   _dbOperation(promise) {
     this.operationsWaiter.incrementPendingOps();
-    return promise().then(result => {
-      this.operationsWaiter.decrementPendingOps();
-      return result;
-    }).catch(() => {
-      this.operationsWaiter.decrementPendingOps();
-      return RSVP.reject(...arguments);
-    });
+    return promise()
+      .then(result => {
+        this.operationsWaiter.decrementPendingOps();
+        return result;
+      })
+      .catch(() => {
+        this.operationsWaiter.decrementPendingOps();
+        return RSVP.reject(...arguments);
+      });
   }
 });
