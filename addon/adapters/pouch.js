@@ -3,7 +3,7 @@ import DS from "ember-data";
 import OperationsWaiter from "ember-pouch/operations-waiter";
 import { extractDeleteRecord } from "../utils";
 
-const { getOwner, run: { bind }, on, String: { pluralize, camelize, classify }, RSVP } = Ember;
+const { getOwner, run: { bind }, on, String: { pluralize, camelize, classify } } = Ember;
 
 export default DS.RESTAdapter.extend({
   coalesceFindRequests: false,
@@ -440,9 +440,9 @@ export default DS.RESTAdapter.extend({
         this.operationsWaiter.decrementPendingOps();
         return result;
       })
-      .catch(() => {
+      .catch(e => {
         this.operationsWaiter.decrementPendingOps();
-        return RSVP.reject(...arguments);
+        throw e;
       });
   }
 });
