@@ -1,10 +1,6 @@
 /* eslint-env node */
 "use strict";
-
-var path = require("path");
-var stew = require("broccoli-stew");
-const Funnel = require("broccoli-funnel");
-const Rollup = require("broccoli-rollup");
+const browserifyTree = require("broccoli-cjs-to-es6");
 
 module.exports = {
   name: "ember-pouch",
@@ -25,49 +21,21 @@ module.exports = {
     }
   },
 
-  // treeForVendor: function() {
-  //   var pouchdb = stew.find(path.join(path.dirname(require.resolve('pouchdb')), '..', 'dist'), {
-  //     destDir: 'pouchdb',
-  //     files: ['pouchdb.js']
-  //   });
-  //
-  //   var relationalPouch = stew.find(path.join(path.dirname(require.resolve('relational-pouch')), '..', 'dist'), {
-  //     destDir: 'pouchdb',
-  //     files: ['pouchdb.relational-pouch.js']
-  //   });
-  //
-  //   var shims = stew.find(__dirname + '/vendor/pouchdb', {
-  //     destDir: 'pouchdb',
-  //     files: ['shims.js']
-  //   });
-  //
-  //   return stew.find([
-  //     pouchdb,
-  //     relationalPouch,
-  //     shims
-  //   ]);
-  // },
-
-  treeForVendor() {
-    var pouchdb = new Funnel(path.dirname(require.resolve("pouchdb-browser")));
-    return new Rollup(pouchdb, {
-      rollup: {
-        input: "./index.js",
-        output: {
-          file: "pouchdb.js",
-          format: "iife"
-        }
-      }
+  treeForVendor(tree) {
+    return browserifyTree(tree, {
+      modules: [
+        {
+          module: "pouchdb-browser",
+          resolution: "pouchdb"
+        },
+        "relational-pouch",
+        "pouchdb-find"
+      ],
+      outputFile: "pouchdb-browserify.js"
     });
   },
 
   included(app) {
-    app.import("vendor/pouchdb.js");
-    app.import("node_modules/relational-pouch/dist/pouchdb.relational-pouch.js");
-    // app.import('vendor/pouchdb/pouchdb.js');
-    // app.import('vendor/pouchdb/pouchdb.relational-pouch.js');
-    // app.import('vendor/pouchdb/shims.js', {
-    //   exports: { 'pouchdb': [ 'default' ]}
-    // });
+    app.import("vendor/pouchdb-browserify.js");
   }
 };
