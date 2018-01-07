@@ -1,9 +1,8 @@
+import { assert } from '@ember/debug';
+import { isEmpty } from '@ember/utils';
 import Adapter from 'dummy/adapter';
 import PouchDB from 'pouchdb';
 import config from 'dummy/config/environment';
-import Ember from 'ember';
-
-const { assert, isEmpty } = Ember;
 
 function createDb() {
   let localDb = config.emberpouch.localDb;

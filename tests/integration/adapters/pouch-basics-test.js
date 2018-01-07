@@ -1,9 +1,9 @@
+import { Promise as EmberPromise } from 'rsvp';
+
 import { module, test } from "qunit";
-
 import DS from "ember-data";
-import moduleForIntegration from "../../helpers/module-for-pouch-acceptance";
 
-import Ember from "ember";
+import moduleForIntegration from "../../helpers/module-for-pouch-acceptance";
 
 import config from "dummy/config/environment";
 
@@ -43,7 +43,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(3);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db().bulkDocs([
@@ -67,7 +67,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(2);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db().bulkDocs([
@@ -88,7 +88,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
     test("can query with sort", function(assert) {
       assert.expect(3);
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db()
@@ -128,7 +128,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
     test("can query multi-field queries", function(assert) {
       assert.expect(3);
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db()
@@ -163,7 +163,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
 
     test("queryRecord returns null when no record is found", function(assert) {
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db()
@@ -201,7 +201,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(1);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db()
@@ -228,7 +228,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
     test("can query one associated records", function(assert) {
       assert.expect(3);
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db()
@@ -261,7 +261,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(3);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db().bulkDocs(getDocsForRelations());
@@ -284,7 +284,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(2);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           var newSoup = this.store().createRecord("taco-soup", { id: "E", flavor: "balsamic" });
@@ -310,7 +310,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(1);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           var s = { _id: "tacoSoup_2_C", data: { flavor: "al pastor" } };
@@ -353,7 +353,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
         assert.expect(2);
 
         var done = assert.async();
-        Ember.RSVP.Promise
+        EmberPromise
           .resolve()
           .then(() => {
             return this.db().bulkDocs([
@@ -385,7 +385,7 @@ moduleForIntegration("Integration | Adapter | Basic CRUD Ops", {}, function() {
       assert.expect(1);
 
       var done = assert.async();
-      Ember.RSVP.Promise
+      EmberPromise
         .resolve()
         .then(() => {
           return this.db().bulkDocs([

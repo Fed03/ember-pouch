@@ -1,24 +1,21 @@
-import Ember from 'ember';
-import DS from 'ember-data';
+import { isEmpty } from "@ember/utils";
+import { get } from "@ember/object";
+import { getOwner } from "@ember/application";
+import DS from "ember-data";
 
-const {
-  get,
-  getOwner
-} = Ember;
-const keys = Object.keys || Ember.keys;
-const assign = Object.assign || Ember.assign;
+const keys = Object.keys;
+const assign = Object.assign;
 
 var Serializer = DS.RESTSerializer.extend({
-
   init: function() {
     this._super(...arguments);
 
-    let config = getOwner(this).resolveRegistration('config:environment');
-    this.dontsavedefault = config['emberpouch'] && config['emberpouch']['dontsavehasmany'];
+    let config = getOwner(this).resolveRegistration("config:environment");
+    this.dontsavedefault = config["emberpouch"] && config["emberpouch"]["dontsavehasmany"];
   },
 
   _getDontsave(relationship) {
-    return !Ember.isEmpty(relationship.options.dontsave) ? relationship.options.dontsave : this.dontsavedefault;
+    return !isEmpty(relationship.options.dontsave) ? relationship.options.dontsave : this.dontsavedefault;
   },
 
   shouldSerializeHasMany: function(snapshot, key, relationship) {
@@ -42,7 +39,7 @@ var Serializer = DS.RESTSerializer.extend({
   },
 
   _isAttachment(attribute) {
-    return ['attachment', 'attachments'].indexOf(attribute.type) !== -1;
+    return ["attachment", "attachments"].indexOf(attribute.type) !== -1;
   },
 
   serializeAttribute(snapshot, json, key, attribute) {
@@ -51,7 +48,7 @@ var Serializer = DS.RESTSerializer.extend({
       // if provided, use the mapping provided by `attrs` in the serializer
       var payloadKey = this._getMappedKey(key, snapshot.type);
       if (payloadKey === key && this.keyForAttribute) {
-        payloadKey = this.keyForAttribute(key, 'serialize');
+        payloadKey = this.keyForAttribute(key, "serialize");
       }
 
       // Merge any attachments in this attribute into the `attachments` property.
@@ -71,7 +68,7 @@ var Serializer = DS.RESTSerializer.extend({
 
   extractAttributes(modelClass, resourceHash) {
     let attributes = this._super(modelClass, resourceHash);
-    let modelAttrs = get(modelClass, 'attributes');
+    let modelAttrs = get(modelClass, "attributes");
     modelClass.eachTransformedAttribute(key => {
       let attribute = modelAttrs.get(key);
       if (this._isAttachment(attribute)) {
@@ -89,24 +86,23 @@ var Serializer = DS.RESTSerializer.extend({
     let relationships = this._super(...arguments);
 
     modelClass.eachRelationship((key, relationshipMeta) => {
-      if (relationshipMeta.kind === 'hasMany' && this._getDontsave(relationshipMeta) && !!relationshipMeta.options.async) {
+      if (relationshipMeta.kind === "hasMany" && this._getDontsave(relationshipMeta) && !!relationshipMeta.options.async) {
         relationships[key] = { links: { related: key } };
       }
     });
 
     return relationships;
-  },
-
+  }
 });
 
 // DEPRECATION: The private method _shouldSerializeHasMany has been promoted to the public API
 // See https://www.emberjs.com/deprecations/ember-data/v2.x/#toc_jsonserializer-shouldserializehasmany
- if( ! DS.JSONSerializer.prototype.shouldSerializeHasMany ) {
-   Serializer.reopen({
-     _shouldSerializeHasMany( snapshot, key, relationship ){
-       return this.shouldSerializeHasMany( snapshot, key, relationship );
-     }
-   });
- }
+if (!DS.JSONSerializer.prototype.shouldSerializeHasMany) {
+  Serializer.reopen({
+    _shouldSerializeHasMany(snapshot, key, relationship) {
+      return this.shouldSerializeHasMany(snapshot, key, relationship);
+    }
+  });
+}
 
- export default Serializer;
+export default Serializer;

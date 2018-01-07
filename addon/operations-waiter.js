@@ -1,3 +1,4 @@
+import { registerWaiter } from '@ember/test';
 import Ember from "ember";
 
 class OperationsWaiter {
@@ -22,7 +23,7 @@ class OperationsWaiter {
   }
 
   _registerWaiter() {
-    Ember.Test.registerWaiter(() => this._shouldContinue());
+    registerWaiter(() => this._shouldContinue());
   }
 }
 

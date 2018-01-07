@@ -1,13 +1,17 @@
-import Ember from "ember";
+import { isEmpty } from "@ember/utils";
+import { get } from "@ember/object";
+import { getOwner } from "@ember/application";
+import { bind } from "@ember/runloop";
+import { on } from "@ember/object/evented";
+import { classify, camelize } from "@ember/string";
 import DS from "ember-data";
 import OperationsWaiter from "ember-pouch/operations-waiter";
 import { extractDeleteRecord } from "../utils";
-
-const { getOwner, run: { bind }, on, String: { pluralize, camelize, classify } } = Ember;
+import { pluralize } from "ember-inflector";
 
 export default DS.RESTAdapter.extend({
   coalesceFindRequests: false,
-  operationsWaiter: new OperationsWaiter(),
+  operationsWaiter: null,
 
   // The change listener ensures that individual records are kept up to date
   // when the data in the database changes. This makes ember-data 2.0's record
@@ -19,6 +23,7 @@ export default DS.RESTAdapter.extend({
     return false;
   },
   _onInit: on("init", function() {
+    this.set("operationsWaiter", new OperationsWaiter());
     this._startChangesToStoreListener();
   }),
   _startChangesToStoreListener: function() {
@@ -125,7 +130,7 @@ export default DS.RESTAdapter.extend({
       throw new Error("Please set the `db` property on the adapter.");
     }
 
-    if (!Ember.get(type, "attributes").has("rev")) {
+    if (!get(type, "attributes").has("rev")) {
       var modelName = classify(recordTypeName);
       throw new Error("Please add a `rev` attribute of type `string`" + " on the " + modelName + " model.");
     }
@@ -170,7 +175,7 @@ export default DS.RESTAdapter.extend({
         let includeRel = true;
         rel.options = rel.options || {};
         if (typeof rel.options.async === "undefined") {
-          rel.options.async = config.emberpouch && !Ember.isEmpty(config.emberpouch.async) ? config.emberpouch.async : true; //default true from https://github.com/emberjs/data/pull/3366
+          rel.options.async = config.emberpouch && !isEmpty(config.emberpouch.async) ? config.emberpouch.async : true; //default true from https://github.com/emberjs/data/pull/3366
         }
         let options = Object.create(rel.options);
         if (rel.kind === "hasMany" && (options.dontsave || (typeof options.dontsave === "undefined" && dontsavedefault))) {
@@ -335,11 +340,11 @@ export default DS.RESTAdapter.extend({
       selector: this._buildSelector(query.filter)
     };
 
-    if (!Ember.isEmpty(query.sort)) {
+    if (!isEmpty(query.sort)) {
       queryParams.sort = this._buildSort(query.sort);
     }
 
-    if (!Ember.isEmpty(query.limit)) {
+    if (!isEmpty(query.limit)) {
       queryParams.limit = query.limit;
     }
 
@@ -372,7 +377,7 @@ export default DS.RESTAdapter.extend({
    * We keep the method for backward compatibility and forward calls to
    * `findRecord`. This can be removed when the library drops support
    * for deprecated methods.
-  */
+   */
   find: function(store, type, id) {
     return this.findRecord(store, type, id);
   },
