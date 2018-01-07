@@ -38,7 +38,7 @@ before_install:
   - npm --version
 
 install:
-  -npm install
+  - npm install
 
 script:
   - npm run lint:js
